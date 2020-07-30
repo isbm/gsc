@@ -9,7 +9,13 @@ import (
 func (gw *GSCClone) getRepoFromFile() error {
 	content, err := ioutil.ReadFile(GIT_PKG_REPO)
 	if err != nil {
-		return fmt.Errorf("Git repository is missing. Clone with the Git repo included instead.")
+		if gw.repoUrl == "" {
+			return fmt.Errorf("Git repository is missing. Clone with the Git repo included instead.")
+		}
+
+		content = []byte(fmt.Sprintf("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<git>\n  <url>%s</url>\n</git>\n", gw.repoUrl))
+		ioutil.WriteFile(GIT_PKG_REPO, content, 0644)
+		return nil
 	}
 
 	var gitPkgRepo GitPkgRepo
