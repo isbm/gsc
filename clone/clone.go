@@ -1,5 +1,14 @@
 package gsc_clone
 
+import (
+	"fmt"
+	"os"
+
+	gsc_utils "github.com/isbm/gsc/utils"
+
+	wzlib_subprocess "github.com/infra-whizz/wzlib/subprocess"
+)
+
 // GSCClone class
 type GSCClone struct {
 	project string
@@ -36,5 +45,19 @@ func (gw *GSCClone) Clone() error {
 	if err := gw.getRepoFromFile(); err != nil {
 		return err
 	}
+
+	usr, err := gsc_utils.GetOSCUser()
+	if err != nil {
+		return err
+	}
+	oscPath := fmt.Sprintf("home:%s:branches:%s", usr.Uid, gw.project)
+	_, stderr := wzlib_subprocess.StreamedExec(NewFetcherProcessStream(oscPath), "osc", "bco", gw.project, gw.pkg)
+
+	if stderr != "" {
+		fmt.Println("ERR:\n", stderr)
+	}
+	wzlib_subprocess.BufferedExec("mv", GIT_PKG_REPO, fmt.Sprintf("%s/%s/", oscPath, gw.pkg))
+	os.Chdir(fmt.Sprintf("%s/%s/", oscPath, gw.pkg))
+	wzlib_subprocess.BufferedExec("osc", "add", GIT_PKG_REPO)
 	return nil
 }
