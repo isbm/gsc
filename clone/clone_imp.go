@@ -15,6 +15,7 @@ func (gw *GSCClone) getRepoFromFile() error {
 
 		content = []byte(fmt.Sprintf("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<git>\n  <url>%s</url>\n</git>\n", gw.repoUrl))
 		ioutil.WriteFile(GIT_PKG_REPO, content, 0644)
+		gw.initGit = true
 		return nil
 	}
 
