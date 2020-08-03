@@ -10,5 +10,5 @@ require (
 	github.com/sirupsen/logrus v1.6.0 // indirect
 	github.com/urfave/cli v1.22.4
 	github.com/urfave/cli/v2 v2.2.0
-	golang.org/x/sys v0.0.0-20200728102440-3e129f6d46b1 // indirect
+	golang.org/x/sys v0.0.0-20200803150936-fd5f0c170ac3 // indirect
 )
