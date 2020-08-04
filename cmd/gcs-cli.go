@@ -4,10 +4,18 @@ import (
 	"fmt"
 	"os"
 
+	gsc_push "github.com/isbm/gsc/push"
+
 	gsc_clone "github.com/isbm/gsc/clone"
 
 	"github.com/urfave/cli/v2"
 )
+
+// Push package to the git and OBS
+func push(ctx *cli.Context) error {
+	push := gsc_push.NewGCSPush()
+	return push.Push()
+}
 
 // Clone package and sync with the git
 func clone(ctx *cli.Context) error {
@@ -41,12 +49,18 @@ func main() {
 		{
 			Name:   "clone",
 			Action: clone,
-			Usage:  "<project> <name>\n\tExample: my:cool:project my_package",
+			Usage:  "Clone package from the OBS and link to Git repo.\n\tUsage: <project> <name>\n\tExample: my:cool:project my_package [repo.git]",
 		},
 		{
 			Name:    "checkout",
 			Aliases: []string{"co", "bco"},
 			Action:  notImplemented,
+		},
+		{
+			Name:    "push",
+			Aliases: []string{"p"},
+			Action:  push,
+			Usage:   "Push package to the OBS branch and Git repo",
 		},
 	}
 	if err := app.Run(os.Args); err != nil {
