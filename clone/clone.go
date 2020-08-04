@@ -5,9 +5,9 @@ import (
 	"os"
 	"strings"
 
-	gsc_utils "github.com/isbm/gsc/utils"
-
+	wzlib_logger "github.com/infra-whizz/wzlib/logger"
 	wzlib_subprocess "github.com/infra-whizz/wzlib/subprocess"
+	gsc_utils "github.com/isbm/gsc/utils"
 )
 
 // GSCClone class
@@ -16,6 +16,7 @@ type GSCClone struct {
 	repoUrl string
 	pkg     string
 	initGit bool
+	wzlib_logger.WzLogger
 }
 
 // NewGCSClone creates a package cloning tool
@@ -82,10 +83,10 @@ func (gw *GSCClone) Clone() error {
 		return err
 	}
 	oscPath := fmt.Sprintf("home:%s:branches:%s", usr.Uid, gw.project)
-	_, stderr := wzlib_subprocess.StreamedExec(NewFetcherProcessStream(oscPath), "osc", "bco", gw.project, gw.pkg)
+	_, stderr := wzlib_subprocess.StreamedExec(NewFetcherProcessStream(oscPath).SetPrefix("Checking out"), "osc", "bco", gw.project, gw.pkg)
 
 	if stderr != "" {
-		fmt.Println("ERR:\n", stderr)
+		gw.GetLogger().Debug(strings.TrimSpace(stderr))
 	}
 	wzlib_subprocess.BufferedExec("mv", GIT_PKG_REPO, fmt.Sprintf("%s/%s/", oscPath, gw.pkg))
 	os.Chdir(fmt.Sprintf("%s/%s/", oscPath, gw.pkg))
