@@ -5,6 +5,8 @@ import (
 	"os"
 	"strings"
 
+	gsc_push "github.com/isbm/gsc/push"
+
 	wzlib_logger "github.com/infra-whizz/wzlib/logger"
 	wzlib_subprocess "github.com/infra-whizz/wzlib/subprocess"
 	gsc_utils "github.com/isbm/gsc/utils"
@@ -12,16 +14,21 @@ import (
 
 // GSCClone class
 type GSCClone struct {
-	project string
-	repoUrl string
-	pkg     string
-	initGit bool
+	project  string
+	repoUrl  string
+	pkg      string
+	initGit  bool
+	pkgutils *gsc_utils.GSCUtils
+	git      *gsc_utils.GitCaller
 	wzlib_logger.WzLogger
 }
 
 // NewGCSClone creates a package cloning tool
 func NewGCSClone() *GSCClone {
 	gw := new(GSCClone)
+	gw.pkgutils = gsc_utils.NewGSCUtils()
+	gw.git = gsc_utils.NewGitCaller()
+
 	return gw
 }
 
@@ -60,14 +67,33 @@ func (gw *GSCClone) setupGit() error {
 	var err error
 
 	if gw.initGit {
-		wzlib_subprocess.BufferedExec("git", "init")
-		wzlib_subprocess.BufferedExec("git", "add", "--all", "--force")
-		wzlib_subprocess.BufferedExec("git", "commit", "-m", "initial commit")
-		wzlib_subprocess.BufferedExec("git", "remote", "add", "origin", gw.getGitRepoUrl())
+		gw.git.Call("init")
+		gw.git.Call("add", "--all", "--force")
+		gw.git.Call("commit", "-m", "initial commit")
+		gw.git.Call("remote", "add", "origin", gw.getGitRepoUrl())
+
+		var pkVer string
+		var pkName string
+		if pkVer, err = gw.pkgutils.GetPackageVersion(); err != nil {
+			return err
+		}
+		if pkName, err = gw.pkgutils.GetPackageName(); err != nil {
+			return err
+		}
+
+		// This is the new package, so initial push to the repo required
+		if err := gsc_push.NewGCSPush().Push(); err != nil {
+			return err
+		}
+
+		// Branch to something
+		branch := fmt.Sprintf("tmp-%s-%s", pkName, pkVer)
+		gw.git.Call("checkout", "-b", branch)
+		gw.GetLogger().Infof("New working Git branch created: %s", branch)
 	} else {
 		// Then:
 		// - move all git files to the current package, overwriting everything
-		_, err = wzlib_subprocess.BufferedExec("git", "clone", gw.getGitRepoUrl())
+		gw.git.Call("clone", gw.getGitRepoUrl())
 	}
 	return err
 }
