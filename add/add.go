@@ -3,6 +3,7 @@ package gsc_add
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	wzlib_logger "github.com/infra-whizz/wzlib/logger"
@@ -34,8 +35,25 @@ func (add *GSCAdd) SetPathspec(pathspec string) *GSCAdd {
 	return add
 }
 
+func (add *GSCAdd) expandPathspec() []string {
+	if add.pathspec == "*" {
+		files, _ := filepath.Glob(add.pathspec)
+		out := []string{}
+		for _, fname := range files {
+			if !strings.HasPrefix(fname, ".") {
+				out = append(out, fname)
+			}
+		}
+		return out
+	} else {
+		return []string{add.pathspec}
+	}
+}
+
 func (add *GSCAdd) Add() error {
-	cmd := wzlib_subprocess.ExecCommand("osc", "commit", add.pathspec)
+	files := add.expandPathspec()
+	files = append(files[:0], append([]string{"commit"}, files[0:]...)...)
+	cmd := wzlib_subprocess.ExecCommand("osc", files...)
 	cmd.Stdin, cmd.Stdout, cmd.Stderr = os.Stdin, os.Stdout, os.Stderr
 	if err := cmd.Run(); err != nil {
 		add.GetLogger().Error(err.Error())
@@ -47,7 +65,9 @@ func (add *GSCAdd) Add() error {
 		return fmt.Errorf("Unable to find an initial log message")
 	}
 
-	add.git.Call("add", add.pathspec)
+	files = add.expandPathspec()
+	files = append(files[:0], append([]string{"add"}, files[0:]...)...)
+	add.git.Call(files...)
 	add.git.Call("commit", "-m", fmt.Sprintf("%s", strings.ReplaceAll(entry.Message, "'", "\\'")))
 
 	return nil
