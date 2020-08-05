@@ -5,10 +5,9 @@ import (
 	"os"
 	"strings"
 
-	gsc_push "github.com/isbm/gsc/push"
-
 	wzlib_logger "github.com/infra-whizz/wzlib/logger"
 	wzlib_subprocess "github.com/infra-whizz/wzlib/subprocess"
+	gsc_push "github.com/isbm/gsc/push"
 	gsc_utils "github.com/isbm/gsc/utils"
 )
 

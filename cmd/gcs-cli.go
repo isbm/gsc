@@ -4,10 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	gsc_push "github.com/isbm/gsc/push"
-
+	gsc_add "github.com/isbm/gsc/add"
 	gsc_clone "github.com/isbm/gsc/clone"
-
+	gsc_push "github.com/isbm/gsc/push"
 	"github.com/urfave/cli/v2"
 )
 
@@ -15,6 +14,14 @@ import (
 func push(ctx *cli.Context) error {
 	push := gsc_push.NewGCSPush()
 	return push.Push()
+}
+
+func add(ctx *cli.Context) error {
+	add := gsc_add.NewGSCAdd()
+	if ctx.Args().Len() > 0 {
+		add.SetPathspec(ctx.Args().Get(0))
+	}
+	return add.Add()
 }
 
 // Clone package and sync with the git
@@ -52,9 +59,9 @@ func main() {
 			Usage:  "Clone package from the OBS and link to Git repo.\n\tUsage: <project> <name>\n\tExample: my:cool:project my_package [repo.git]",
 		},
 		{
-			Name:    "checkout",
-			Aliases: []string{"co", "bco"},
-			Action:  notImplemented,
+			Name:    "add",
+			Aliases: []string{"a"},
+			Action:  add,
 		},
 		{
 			Name:    "push",
