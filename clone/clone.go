@@ -68,7 +68,8 @@ func (gw *GSCClone) setupGit() error {
 
 	if gw.initGit {
 		gw.git.Call("init")
-		gw.git.Call("add", "--all", "--force")
+		gw.git.Call("add", "--all")
+		gw.git.Call("reset", "--", ".osc")
 		gw.git.Call("commit", "-m", "initial commit")
 		gw.git.Call("remote", "add", "origin", gw.getGitRepoUrl())
 
