@@ -87,6 +87,12 @@ func (gw *GSCClone) setupGit() error {
 			return err
 		}
 
+		if err := wzlib_subprocess.ExecCommand("osc", "commit", "-m", "initial link with Git repo").Run(); err != nil {
+			gw.GetLogger().Errorf("Unable to link OSC repo with Git: %s", err.Error())
+		} else {
+			gw.GetLogger().Info("OSC repo has been linked with the Git")
+		}
+
 		// Branch to something
 		branch := fmt.Sprintf("tmp-%s-%s", pkName, pkVer)
 		gw.git.Call("checkout", "-b", branch)
