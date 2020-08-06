@@ -1,6 +1,7 @@
 package gsc_utils
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"net/mail"
@@ -75,7 +76,7 @@ func (cl *GSCChangeLog) parse() *GSCChangeLog {
 		}
 		// Messages
 		for _, msg := range lines[1:] {
-			msg = strings.TrimSpace(msg)
+			//msg = strings.TrimSpace(msg)
 			if msg != "" {
 				clEntry.Messages = append(clEntry.Messages, msg)
 			}
@@ -107,18 +108,34 @@ func (cl *GSCChangeLog) GetAll() []*ChangeLogEntry {
 	return cl.entries
 }
 
-// Dump changelog back to the file
-func (cl *GSCChangeLog) Dump() {
-	for i := len(cl.entries); i > 0; i-- {
-		entry := cl.entries[i-1]
-		fmt.Println(CHLOG_SEP)
-		ts := entry.Date.Format("Mon Jan 2 15:04:05 MST 2006") // Incompatible with buggy SUSE's formatting!
-		fmt.Printf("%s - %s <%s>\n\n", ts,
-			entry.Address.Name, entry.Address.Address)
-		for _, msg := range entry.Messages {
-			fmt.Printf("%s\n", msg)
-		}
-		fmt.Println("")
+// Formats date according with SUSE's buggy date formatting.
+// E.g.: "Thu Jan  4 06:00:00", while should be "Thu Jan 4 06:00:00"
+// (extra space before "4")
+func (cl *GSCChangeLog) formatDate(date time.Time) string {
+	pattern := "Mon Jan 2 15:04:05 MST 2006"
+	ts := strings.Split(date.Format(pattern), " ")
+	if len(ts[2]) == 1 {
+		ts[2] = " " + ts[2]
 	}
 
+	return strings.Join(ts, " ")
+}
+
+// Dump changelog back to the file
+func (cl *GSCChangeLog) Render() string {
+	var buff bytes.Buffer
+	entriesLen := len(cl.entries)
+	for i := entriesLen; i > 0; i-- {
+		entry := cl.entries[i-1]
+		if i < entriesLen {
+			buff.WriteString("\n")
+		}
+		buff.WriteString(CHLOG_SEP + "\n")
+		buff.WriteString(fmt.Sprintf("%s - %s <%s>\n\n",
+			cl.formatDate(entry.Date), entry.Address.Name, entry.Address.Address))
+		for _, msg := range entry.Messages {
+			buff.WriteString(msg + "\n")
+		}
+	}
+	return buff.String()
 }
