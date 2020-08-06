@@ -19,6 +19,8 @@ import (
 type GSCAdd struct {
 	pathspec string
 	git      *gsc_utils.GitCaller
+	chlog    *gsc_utils.GSCChangeLog
+
 	wzlib_logger.WzLogger
 }
 
@@ -26,6 +28,7 @@ type GSCAdd struct {
 func NewGSCAdd() *GSCAdd {
 	add := new(GSCAdd).SetPathspec("*")
 	add.git = gsc_utils.NewGitCaller()
+	add.chlog = gsc_utils.NewGSCChangeLog()
 	return add
 }
 
@@ -52,8 +55,14 @@ func (add *GSCAdd) expandPathspec() []string {
 
 func (add *GSCAdd) Add() error {
 	files := add.expandPathspec()
-	files = append(files[:0], append([]string{"commit"}, files[0:]...)...)
-	cmd := wzlib_subprocess.ExecCommand("osc", files...)
+	cmd := wzlib_subprocess.ExecCommand("osc", append(files[:0], append([]string{"add"}, files[0:]...)...)...)
+	if err := cmd.Run(); err != nil {
+		add.GetLogger().Error(err.Error())
+		return err
+	}
+
+	files = add.expandPathspec()
+	cmd = wzlib_subprocess.ExecCommand("osc", append(files[:0], append([]string{"commit"}, files[0:]...)...)...)
 	cmd.Stdin, cmd.Stdout, cmd.Stderr = os.Stdin, os.Stdout, os.Stderr
 	if err := cmd.Run(); err != nil {
 		add.GetLogger().Error(err.Error())
@@ -66,8 +75,7 @@ func (add *GSCAdd) Add() error {
 	}
 
 	files = add.expandPathspec()
-	files = append(files[:0], append([]string{"add"}, files[0:]...)...)
-	add.git.Call(files...)
+	add.git.Call(append(files[:0], append([]string{"add"}, files[0:]...)...)...)
 	add.git.Call("commit", "-m", fmt.Sprintf("%s", strings.ReplaceAll(entry.Message, "'", "\\'")))
 
 	return nil
