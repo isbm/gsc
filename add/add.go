@@ -1,6 +1,7 @@
 package gsc_add
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -43,7 +44,8 @@ func (add *GSCAdd) expandPathspec() []string {
 		files, _ := filepath.Glob(add.pathspec)
 		out := []string{}
 		for _, fname := range files {
-			if !strings.HasPrefix(fname, ".") {
+			// Do not take any hidden files (.osc etc) and .changes
+			if !strings.HasPrefix(fname, ".") && !strings.HasSuffix(fname, ".changes") {
 				out = append(out, fname)
 			}
 		}
@@ -51,6 +53,24 @@ func (add *GSCAdd) expandPathspec() []string {
 	} else {
 		return []string{add.pathspec}
 	}
+}
+
+// Get latest OSC message that is not yet committed to the git
+func (add *GSCAdd) getOSCMessage() (string, error) {
+	entry := gsc_utils.NewGSCRevisionLog().GetLatest() // Should be never nil
+	if entry == nil {
+		return "", fmt.Errorf("Unable to find an initial log message")
+	}
+	var out bytes.Buffer
+	for i, line := range strings.Split(entry.Message, "\n") {
+		if i > 0 {
+			out.WriteString(" ")
+		}
+		if !strings.HasPrefix(strings.TrimSpace(line), "# ") {
+			out.WriteString(line)
+		}
+	}
+	return fmt.Sprintf("%s", strings.ReplaceAll(out.String(), "'", "\\'")), nil
 }
 
 func (add *GSCAdd) Add() error {
@@ -69,14 +89,17 @@ func (add *GSCAdd) Add() error {
 		return err
 	}
 
-	entry := gsc_utils.NewGSCRevisionLog().GetLatest() // Should be never nil
-	if entry == nil {
-		return fmt.Errorf("Unable to find an initial log message")
+	commitMessage, err := add.getOSCMessage()
+	if err != nil {
+		return err
 	}
-
 	files = add.expandPathspec()
 	add.git.Call(append(files[:0], append([]string{"add"}, files[0:]...)...)...)
-	add.git.Call("commit", "-m", fmt.Sprintf("%s", strings.ReplaceAll(entry.Message, "'", "\\'")))
+	add.git.Call("commit", "-m", commitMessage)
+
+	logEntry, _ := add.chlog.GetWIP()
+	logEntry.Messages = append(logEntry.Messages, "# - "+commitMessage)
+	add.chlog.Write()
 
 	return nil
 }
