@@ -108,6 +108,40 @@ func (cl *GSCChangeLog) GetLatest() *ChangeLogEntry {
 	return nil
 }
 
+func (cl *GSCChangeLog) UpdateWIP(entry *ChangeLogEntry) {
+
+}
+
+// GetWIP (work in progress) changelog entry. If none found, creates one
+// and returns. WIP log entry has a marker "# WIP ENTRY" inside the messages.
+func (cl *GSCChangeLog) GetWIP() (*ChangeLogEntry, error) {
+	entry := cl.GetLatest()
+	if entry != nil {
+		for _, msgline := range entry.Messages {
+			if strings.Contains(msgline, "# WIP ENTRY") {
+				return entry, nil
+			}
+		}
+	}
+
+	entry = new(ChangeLogEntry)
+	oscUser, err := GetOSCUser()
+	if err != nil {
+		return nil, err
+	}
+	entry.Address, err = mail.ParseAddress(fmt.Sprintf("%s <%s>", oscUser.Name, strings.ReplaceAll(oscUser.Email, ">", "")))
+	if err != nil {
+		cl.GetLogger().Error("failed parsing address: " + err.Error())
+	}
+	entry.Date = time.Now()
+	entry.Messages = []string{"# WIP ENTRY"}
+
+	cl.AddEntry(entry)
+	cl.Write()
+
+	return entry, nil
+}
+
 // GetAll changelog entries
 func (cl *GSCChangeLog) GetAll() []*ChangeLogEntry {
 	return cl.entries
