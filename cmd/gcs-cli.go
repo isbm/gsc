@@ -6,7 +6,6 @@ import (
 
 	gsc_add "github.com/isbm/gsc/add"
 	gsc_clone "github.com/isbm/gsc/clone"
-	gsc_push "github.com/isbm/gsc/push"
 	gsc_submit "github.com/isbm/gsc/submit"
 	"github.com/urfave/cli/v2"
 )
@@ -16,12 +15,6 @@ func submit(ctx *cli.Context) error {
 	sr := gsc_submit.NewGSCSubmitRequest()
 	sr.Submit()
 	return nil
-}
-
-// Push package to the git and OBS
-func push(ctx *cli.Context) error {
-	push := gsc_push.NewGCSPush()
-	return push.Push()
 }
 
 func add(ctx *cli.Context) error {
@@ -76,12 +69,6 @@ func main() {
 			Aliases: []string{"sr"},
 			Action:  submit,
 			Usage:   "Create request to submit source back to Project",
-		},
-		{
-			Name:    "push",
-			Aliases: []string{"p"},
-			Action:  notImplemented,
-			Usage:   "Push package to the OBS branch and Git repo",
 		},
 	}
 	if err := app.Run(os.Args); err != nil {
