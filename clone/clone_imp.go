@@ -24,8 +24,8 @@ func (gw *GSCClone) getRepoFromFile() error {
 		return err
 	}
 
-	if gw.repoUrl != "" {
-		return fmt.Errorf("Git repository is already specified as: %s", gitPkgRepo.Url)
+	if gw.repoUrl != "" && gw.repoUrl != gitPkgRepo.Url {
+		return fmt.Errorf("Git repository is already linked to: %s", gitPkgRepo.Url)
 	}
 
 	gw.repoUrl = gitPkgRepo.Url
