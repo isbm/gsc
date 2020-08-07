@@ -178,3 +178,8 @@ func (cl *GSCChangeLog) Render() string {
 	}
 	return buff.String()
 }
+
+// Write changelog
+func (cl *GSCChangeLog) Write() error {
+	return ioutil.WriteFile(cl.GetFilename(), []byte(cl.Render()), 0644)
+}
