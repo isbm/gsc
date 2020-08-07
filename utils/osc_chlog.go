@@ -34,6 +34,11 @@ func NewGSCChangeLog() *GSCChangeLog {
 	return cl
 }
 
+// GetFilename of the changelog
+func (cl *GSCChangeLog) GetFilename() string {
+	return cl.filename
+}
+
 func (cl *GSCChangeLog) parse() *GSCChangeLog {
 	files, err := ioutil.ReadDir(".")
 	if err != nil {
