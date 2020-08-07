@@ -1,8 +1,11 @@
 package gsc_clone
 
 import (
+	"bytes"
 	"fmt"
+	"io/ioutil"
 	"os"
+	"path"
 	"strings"
 
 	wzlib_logger "github.com/infra-whizz/wzlib/logger"
@@ -62,24 +65,22 @@ func (gw *GSCClone) getGitRepoUrl() string {
 	return repo
 }
 
+func (gw *GSCClone) addDefaultGitIgnore() error {
+	var out bytes.Buffer
+	out.WriteString(".osc/\n")
+	out.WriteString(".gitignore\n")
+	return ioutil.WriteFile(".gitignore", out.Bytes(), 0644)
+}
+
 func (gw *GSCClone) setupGit() error {
 	var err error
-
 	if gw.initGit {
+		gw.addDefaultGitIgnore()
 		gw.git.Call("init")
 		gw.git.Call("add", "--all")
 		gw.git.Call("reset", "--", ".osc")
 		gw.git.Call("commit", "-m", "initial commit")
 		gw.git.Call("remote", "add", "origin", gw.getGitRepoUrl())
-
-		var pkVer string
-		var pkName string
-		if pkVer, err = gw.pkgutils.GetPackageVersion(); err != nil {
-			return err
-		}
-		if pkName, err = gw.pkgutils.GetPackageName(); err != nil {
-			return err
-		}
 
 		// This is the new package, so initial push to the repo required
 		if err := gsc_push.NewGCSPush().Push(); err != nil {
@@ -91,25 +92,40 @@ func (gw *GSCClone) setupGit() error {
 		} else {
 			gw.GetLogger().Info("OSC repo has been linked with the Git")
 		}
-
-		// Branch to something
-		branch := fmt.Sprintf("tmp-%s-%s", pkName, pkVer)
-		gw.git.Call("checkout", "-b", branch)
-		gw.GetLogger().Infof("New working Git branch created: %s", branch)
 	} else {
 		// Then:
 		// - move all git files to the current package, overwriting everything
-		gw.git.Call("clone", gw.getGitRepoUrl())
+		tempGitRepo := gsc_utils.RandomString() + "-repo"
+		gw.git.Call("clone", gw.getGitRepoUrl(), tempGitRepo)
+		files, err := ioutil.ReadDir("./" + tempGitRepo)
+		if err != nil {
+			return err
+		}
+		for _, nfo := range files {
+			fmt.Println("Moving", nfo.Name())
+			os.Rename(path.Join(tempGitRepo, nfo.Name()), nfo.Name())
+		}
+		if err := wzlib_subprocess.ExecCommand("rm", "-rf", tempGitRepo).Run(); err != nil {
+			return err
+		}
 	}
+	// Branch to something
+	var pkVer string
+	var pkName string
+	if pkVer, err = gw.pkgutils.GetPackageVersion(); err != nil {
+		return err
+	}
+	if pkName, err = gw.pkgutils.GetPackageName(); err != nil {
+		return err
+	}
+	branch := fmt.Sprintf("tmp-%s-%s", pkName, pkVer)
+	gw.git.Call("checkout", "-b", branch)
+	gw.GetLogger().Infof("New working Git branch created: %s", branch)
 	return err
 }
 
 // Clone package with the bind to the Git repo
 func (gw *GSCClone) Clone() error {
-	if err := gw.getRepoFromFile(); err != nil {
-		return err
-	}
-
 	usr, err := gsc_utils.GetOSCUser()
 	if err != nil {
 		return err
@@ -128,7 +144,10 @@ func (gw *GSCClone) Clone() error {
 		return err
 	}
 
-	// - git-clone from the repo
+	if err := gw.getRepoFromFile(); err != nil {
+		return err
+	}
+
 	if err = gw.setupGit(); err != nil {
 		return err
 	}
