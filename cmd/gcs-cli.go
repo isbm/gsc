@@ -6,15 +6,19 @@ import (
 
 	gsc_add "github.com/isbm/gsc/add"
 	gsc_clone "github.com/isbm/gsc/clone"
+	gsc_close "github.com/isbm/gsc/close"
 	gsc_submit "github.com/isbm/gsc/submit"
 	"github.com/urfave/cli/v2"
 )
 
 // Submit request
 func submit(ctx *cli.Context) error {
-	sr := gsc_submit.NewGSCSubmitRequest()
-	sr.Submit()
-	return nil
+	return gsc_submit.NewGSCSubmitRequest().Submit()
+}
+
+// Close current branch
+func closeBranch(ctx *cli.Context) error {
+	return gsc_close.NewGSCCloseBranch().Close()
 }
 
 func add(ctx *cli.Context) error {
@@ -55,9 +59,10 @@ func main() {
 
 	app.Commands = []*cli.Command{
 		{
-			Name:   "clone",
-			Action: clone,
-			Usage:  "Clone package from the OBS and link to Git repo.\n\tUsage: <project> <name>\n\tExample: my:cool:project my_package [repo.git]",
+			Name:    "clone",
+			Aliases: []string{"co"},
+			Action:  clone,
+			Usage:   "Clone package from the OBS and link to Git repo.\n\tUsage: <project> <name>\n\tExample: my:cool:project my_package [repo.git]",
 		},
 		{
 			Name:    "add",
@@ -69,6 +74,12 @@ func main() {
 			Aliases: []string{"sr"},
 			Action:  submit,
 			Usage:   "Create request to submit source back to Project",
+		},
+		{
+			Name:    "close",
+			Aliases: []string{"cl"},
+			Action:  closeBranch,
+			Usage:   "Close all work on this package branch (fall-back to the main branch, delete current)",
 		},
 	}
 	if err := app.Run(os.Args); err != nil {
