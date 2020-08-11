@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"strings"
+
+	wzlib_subprocess "github.com/infra-whizz/wzlib/subprocess"
 )
 
 type GSCUtils struct {
@@ -58,4 +60,20 @@ func (utl *GSCUtils) GetPackageVersion() (string, error) {
 // GetPackageName from the spec
 func (utl *GSCUtils) GetPackageName() (string, error) {
 	return utl.getKey("name")
+}
+
+// GetProjectName returns current project name
+func (utl *GSCUtils) GetProjectInfo() (string, error) {
+	cmd, err := wzlib_subprocess.BufferedExec("osc", "info")
+	if err != nil {
+		return "", err
+	}
+	out := cmd.StdoutString()
+	cmd.Wait()
+	for _, line := range strings.Split(out, "\n") {
+		if strings.HasPrefix(strings.ToLower(line), "project name:") {
+			return strings.TrimSpace(strings.SplitN(line, ":", 2)[1]), nil
+		}
+	}
+	return "", fmt.Errorf("Unable to find a project name in the current info")
 }
