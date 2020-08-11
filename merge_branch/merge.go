@@ -26,19 +26,20 @@ func (cb *GSCMergeBranch) Merge() error {
 		cb.GetLogger().Error("Not forked state.")
 		return fmt.Errorf("You cannot merge the main branch to the main branch")
 	}
+
+	cb.GetLogger().Infof("Switching to %s branch from %s", defaultBranch, currentBranch)
 	if err := cb.git.Call("checkout", defaultBranch); err != nil {
-		cb.GetLogger().Infof("Switching to %s branch from %s", defaultBranch, currentBranch)
 		return err
 	}
 
+	cb.GetLogger().Infof("Merging branch %s to %s", currentBranch, defaultBranch)
 	if err := cb.git.Call("merge", "--no-ff", "--no-squash", "--message",
 		fmt.Sprintf("Merge branch '%s'", currentBranch), currentBranch); err != nil {
-		cb.GetLogger().Infof("Merging branch %s to %s", currentBranch, defaultBranch)
 		return err
 	}
 
+	cb.GetLogger().Infof("Pushing %s to the Git repo", defaultBranch)
 	if err := cb.git.Call("push", "-u", "origin", defaultBranch); err != nil {
-		cb.GetLogger().Infof("Pushing %s to the Git repo", defaultBranch)
 		return err
 	}
 

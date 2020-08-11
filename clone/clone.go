@@ -56,7 +56,7 @@ func (gw *GSCClone) getGitRepoUrl() string {
 	repo := ""
 	if strings.Contains(gw.repoUrl, "@") {
 		if !strings.HasPrefix(gw.repoUrl, "git@") {
-			panic("Wrong git url!")
+			gw.GetLogger().Panic("Wrong Git URL")
 		}
 		repo = gw.repoUrl
 	} else {
@@ -75,6 +75,7 @@ func (gw *GSCClone) addDefaultGitIgnore() error {
 func (gw *GSCClone) setupGit() error {
 	var err error
 	if gw.initGit {
+		gw.GetLogger().Info("The package was not yet linked to the repository.")
 		gw.addDefaultGitIgnore()
 		gw.git.Call("init")
 		gw.git.Call("add", "--all")
@@ -93,16 +94,18 @@ func (gw *GSCClone) setupGit() error {
 			gw.GetLogger().Info("OSC repo has been linked with the Git")
 		}
 	} else {
-		// Then:
-		// - move all git files to the current package, overwriting everything
+		gitRepoURL := gw.getGitRepoUrl()
 		tempGitRepo := gsc_utils.RandomString() + "-repo"
-		gw.git.Call("clone", gw.getGitRepoUrl(), tempGitRepo)
+
+		gw.GetLogger().Infof("Getting package repository from %s", gitRepoURL)
+		gw.git.Call("clone", gitRepoURL, tempGitRepo)
+
 		files, err := ioutil.ReadDir("./" + tempGitRepo)
 		if err != nil {
 			return err
 		}
 		for _, nfo := range files {
-			fmt.Println("Moving", nfo.Name())
+			gw.GetLogger().Debugf("Moving %s", nfo.Name())
 			os.Rename(path.Join(tempGitRepo, nfo.Name()), nfo.Name())
 		}
 		if err := wzlib_subprocess.ExecCommand("rm", "-rf", tempGitRepo).Run(); err != nil {
@@ -119,6 +122,7 @@ func (gw *GSCClone) setupGit() error {
 		return err
 	}
 	branch := fmt.Sprintf("tmp-%s-%s", pkName, pkVer)
+	gw.GetLogger().Infof("Creating new Git branch %s", branch)
 	gw.git.Call("checkout", "-b", branch)
 	gw.GetLogger().Infof("New working Git branch created: %s", branch)
 	return err

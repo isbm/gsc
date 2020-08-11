@@ -28,6 +28,7 @@ func (cb *GSCCloseBranch) Close() error {
 		cb.GetLogger().Error(err.Error())
 		return err
 	}
+	cb.GetLogger().Infof("Closing %s branch and discarding all the changes.", currentBranch)
 	if err := wzlib_subprocess.ExecCommand("git", "checkout", cb.git.GetDefaultBranch()).Run(); err != nil {
 		return err
 	}

@@ -1,15 +1,17 @@
 package gsc_clone
 
 import (
-	"os"
 	"path"
 	"strings"
+
+	wzlib_logger "github.com/infra-whizz/wzlib/logger"
 )
 
 // FetcherProcessStream obj
 type FetcherProcessStream struct {
 	criterion string
 	prefix    string
+	wzlib_logger.WzLogger
 }
 
 // NewFetcherProcessStream constructor
@@ -41,7 +43,7 @@ func (fps *FetcherProcessStream) Write(data []byte) (int, error) {
 	if strings.Contains(line, fps.criterion) {
 		line = fps.Filter(line)
 		if line != "" {
-			os.Stdout.WriteString(fps.prefix + line + "\n")
+			fps.GetLogger().Info(fps.prefix + line)
 		}
 	}
 	return len(data), nil
