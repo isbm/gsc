@@ -4,24 +4,44 @@ import (
 	"fmt"
 	"os"
 
+	wzlib_logger "github.com/infra-whizz/wzlib/logger"
 	gsc_add "github.com/isbm/gsc/add"
 	gsc_clone "github.com/isbm/gsc/clone"
 	gsc_close "github.com/isbm/gsc/close"
+	gsc_merge "github.com/isbm/gsc/merge_branch"
 	gsc_submit "github.com/isbm/gsc/submit"
+	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 )
 
+func setLogger(ctx *cli.Context) {
+	if ctx.Bool("debug") {
+		wzlib_logger.GetCurrentLogger().SetLevel(logrus.DebugLevel)
+	} else {
+		wzlib_logger.GetCurrentLogger().SetLevel(logrus.InfoLevel)
+	}
+}
+
+// Merge package (SR was accepted)
+func merge(ctx *cli.Context) error {
+	setLogger(ctx)
+	return gsc_merge.NewGSCMergeBranch().Merge()
+}
+
 // Submit request
 func submit(ctx *cli.Context) error {
+	setLogger(ctx)
 	return gsc_submit.NewGSCSubmitRequest().Submit()
 }
 
 // Close current branch
 func closeBranch(ctx *cli.Context) error {
+	setLogger(ctx)
 	return gsc_close.NewGSCCloseBranch().Close()
 }
 
 func add(ctx *cli.Context) error {
+	setLogger(ctx)
 	add := gsc_add.NewGSCAdd()
 	if ctx.Args().Len() > 0 {
 		add.SetPathspec(ctx.Args().Get(0))
@@ -31,6 +51,7 @@ func add(ctx *cli.Context) error {
 
 // Clone package and sync with the git
 func clone(ctx *cli.Context) error {
+	setLogger(ctx)
 	if ctx.Args().Len() < 2 || ctx.Args().Len() > 3 {
 		return fmt.Errorf("Two or three arguments are expected: <project> <name> [git repo]")
 	}
@@ -56,6 +77,13 @@ func main() {
 		Name:    appname,
 		Usage:   "OSC to Git binder",
 	}
+	app.Flags = []cli.Flag{
+		&cli.BoolFlag{
+			Name:    "debug",
+			Aliases: []string{"d"},
+			Usage:   "Turn on debug level",
+		},
+	}
 
 	app.Commands = []*cli.Command{
 		{
@@ -70,6 +98,12 @@ func main() {
 			Action:  add,
 		},
 		{
+			Name:    "merge",
+			Aliases: []string{"mg"},
+			Action:  merge,
+			Usage:   "Merge current working branch and cleanup everything",
+		},
+		{
 			Name:    "submitreq",
 			Aliases: []string{"sr"},
 			Action:  submit,
@@ -82,6 +116,7 @@ func main() {
 			Usage:   "Close all work on this package branch (fall-back to the main branch, delete current)",
 		},
 	}
+
 	if err := app.Run(os.Args); err != nil {
 		fmt.Println("Error:", err.Error())
 	}
