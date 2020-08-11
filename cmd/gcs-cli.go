@@ -37,7 +37,11 @@ func submit(ctx *cli.Context) error {
 // Close current branch
 func closeBranch(ctx *cli.Context) error {
 	setLogger(ctx)
-	return gsc_close.NewGSCCloseBranch().Close()
+	cls := gsc_close.NewGSCCloseBranch()
+	if err := cls.Close(); err != nil {
+		return err
+	}
+	return cls.Cleanup()
 }
 
 func add(ctx *cli.Context) error {
