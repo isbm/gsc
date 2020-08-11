@@ -17,15 +17,12 @@ func NewGitCaller() *GitCaller {
 }
 
 // Call git with specific params. All calls are blocking.
-func (gitcall *GitCaller) Call(args ...string) {
-	cmd := wzlib_subprocess.ExecCommand("git", args...)
-	err := cmd.Run()
-	if err != nil {
+func (gitcall *GitCaller) Call(args ...string) error {
+	if err := wzlib_subprocess.ExecCommand("git", args...).Run(); err != nil {
 		gitcall.GetLogger().Errorf("Error calling Git: %s", err.Error())
+		return err
 	}
-	if err != nil {
-		gitcall.GetLogger().Errorf("Error completing Git call: %s", err.Error())
-	}
+	return nil
 }
 
 // GetDefaultBranch from Git. Note, "default branch" is GitHub's terminology.
