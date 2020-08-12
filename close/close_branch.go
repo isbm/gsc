@@ -28,22 +28,17 @@ func NewGSCCloseBranch() *GSCCloseBranch {
 func (cb *GSCCloseBranch) Cleanup() error {
 	// XXX: A bit of crude way... The code needs a bit better refactoring later.
 
-	projName, err := cb.utils.GetProjectInfo()
+	projInfo, err := cb.utils.GetProjectInfo()
 	if err != nil {
 		return err
 	}
 
-	pkgName, err := cb.utils.GetPackageName()
-	if err != nil {
-		return err
-	}
-
-	if !strings.Contains(projName, ":branches:") {
+	if !strings.Contains(projInfo.ProjectName, ":branches:") {
 		return fmt.Errorf("You should never commit directly to the master branch of the package!")
 	}
 
-	cb.GetLogger().Infof("Marking content of the sub-project '%s' as removed", projName)
-	branchName := fmt.Sprintf("%s/%s", projName, pkgName)
+	cb.GetLogger().Infof("Marking content of the sub-project '%s' as removed", projInfo.ProjectName)
+	branchName := fmt.Sprintf("%s/%s", projInfo.ProjectName, projInfo.PackageName)
 	cb.GetLogger().Debugf("Branch name: %s", branchName)
 	parentDir := path.Dir(path.Dir(branchName))
 	cb.GetLogger().Debugf("Moving to %s", parentDir)
@@ -74,8 +69,8 @@ func (cb *GSCCloseBranch) Cleanup() error {
 	}
 	os.Chdir("../")
 
-	cb.GetLogger().Infof("Removing the entire local content of the %s", pkgName)
-	if err := wzlib_subprocess.ExecCommand("rm", "-rf", pkgName).Run(); err != nil {
+	cb.GetLogger().Infof("Removing the entire local content of the %s", projInfo.PackageName)
+	if err := wzlib_subprocess.ExecCommand("rm", "-rf", projInfo.PackageName).Run(); err != nil {
 		return err
 	}
 
