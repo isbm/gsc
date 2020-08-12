@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 
+	gsc_import "github.com/isbm/gsc/import"
+
 	wzlib_logger "github.com/infra-whizz/wzlib/logger"
 	gsc_add "github.com/isbm/gsc/add"
 	gsc_clone "github.com/isbm/gsc/clone"
@@ -20,6 +22,17 @@ func setLogger(ctx *cli.Context) {
 	} else {
 		wzlib_logger.GetCurrentLogger().SetLevel(logrus.InfoLevel)
 	}
+}
+
+// Import package (SR was accepted)
+func importPackage(ctx *cli.Context) error {
+	setLogger(ctx)
+	imp := gsc_import.NewGSCPackageImport()
+	repo := ctx.String("git-repo")
+	if repo != "" {
+		imp.SetGitRepoUrl(repo)
+	}
+	return imp.Import()
 }
 
 // Merge package (SR was accepted)
@@ -97,6 +110,19 @@ func main() {
 			Usage:   "Clone package from the OBS and link to Git repo.\n\tUsage: <project> <name>\n\tExample: my:cool:project my_package [repo.git]",
 		},
 		{
+			Name:    "import",
+			Aliases: []string{"i", "im"},
+			Action:  importPackage,
+			Usage:   "Import package from the sources",
+			Flags: []cli.Flag{
+				&cli.StringFlag{
+					Name:    "git-repo",
+					Aliases: []string{"gr", "r"},
+					Usage:   "Git repository to import package from",
+				},
+			},
+		},
+		{
 			Name:    "add",
 			Aliases: []string{"a"},
 			Action:  add,
@@ -122,6 +148,6 @@ func main() {
 	}
 
 	if err := app.Run(os.Args); err != nil {
-		fmt.Println("Error:", err.Error())
+		wzlib_logger.GetCurrentLogger().Errorf("Error: %s", err.Error())
 	}
 }
