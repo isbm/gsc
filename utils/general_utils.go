@@ -30,7 +30,7 @@ func GetRepoFromFile(repoUrl string) (bool, string, error) {
 	content, err := ioutil.ReadFile(GIT_PKG_REPO)
 	if err != nil {
 		if repoUrl == "" {
-			return false, repoUrl, fmt.Errorf("Git repository is missing. Clone with the Git repo included instead.")
+			return false, repoUrl, fmt.Errorf("Package link to a Git repository was not found.")
 		}
 
 		content = []byte(fmt.Sprintf("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<git>\n  <url>%s</url>\n</git>\n", repoUrl))
