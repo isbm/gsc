@@ -140,10 +140,10 @@ func (gw *GSCClone) Clone() error {
 	if stderr != "" {
 		gw.GetLogger().Debug(strings.TrimSpace(stderr))
 	}
-	wzlib_subprocess.BufferedExec("mv", GIT_PKG_REPO, fmt.Sprintf("%s/%s/", oscPath, gw.pkg))
+	wzlib_subprocess.BufferedExec("mv", gsc_utils.GIT_PKG_REPO, fmt.Sprintf("%s/%s/", oscPath, gw.pkg))
 	os.Chdir(fmt.Sprintf("%s/%s/", oscPath, gw.pkg))
 
-	_, err = wzlib_subprocess.BufferedExec("osc", "add", GIT_PKG_REPO)
+	_, err = wzlib_subprocess.BufferedExec("osc", "add", gsc_utils.GIT_PKG_REPO)
 	if err != nil {
 		return err
 	}

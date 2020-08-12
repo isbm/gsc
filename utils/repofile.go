@@ -1,4 +1,4 @@
-package gsc_clone
+package gsc_utils
 
 import (
 	"encoding/xml"

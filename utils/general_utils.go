@@ -1,6 +1,9 @@
 package gsc_utils
 
 import (
+	"encoding/xml"
+	"fmt"
+	"io/ioutil"
 	"os"
 	"strconv"
 	"sync"
@@ -21,4 +24,28 @@ func RandomString() string {
 	rnd = r
 	mux.Unlock()
 	return strconv.Itoa(int(1e9 + r%1e9))[1:]
+}
+
+func GetRepoFromFile(repoUrl string) (bool, string, error) {
+	content, err := ioutil.ReadFile(GIT_PKG_REPO)
+	if err != nil {
+		if repoUrl == "" {
+			return false, repoUrl, fmt.Errorf("Git repository is missing. Clone with the Git repo included instead.")
+		}
+
+		content = []byte(fmt.Sprintf("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<git>\n  <url>%s</url>\n</git>\n", repoUrl))
+		ioutil.WriteFile(GIT_PKG_REPO, content, 0644)
+		return true, repoUrl, nil
+	}
+
+	var gitPkgRepo GitPkgRepo
+	if err := xml.Unmarshal(content, &gitPkgRepo); err != nil {
+		return false, "", err
+	}
+
+	if repoUrl != "" && repoUrl != gitPkgRepo.Url {
+		return false, "", fmt.Errorf("Git repository is already linked to: %s", gitPkgRepo.Url)
+	}
+
+	return false, gitPkgRepo.Url, nil
 }
