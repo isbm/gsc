@@ -23,7 +23,7 @@ import (
 */
 
 type GSCPackageImport struct {
-	repoUrl  string
+	gpr      *gsc_utils.GitPkgRepo
 	pkgutils *gsc_utils.GSCUtils
 	git      *gsc_utils.GitCaller
 	nfo      *gsc_utils.GSCProjectInfo
@@ -50,7 +50,7 @@ func NewGSCPackageImport() *GSCPackageImport {
 // Automatically try to load Git repo URL from the _git_repo file, if any.
 func (imp *GSCPackageImport) autoloadGitRepoUrl() {
 	var err error
-	_, imp.repoUrl, err = gsc_utils.GetRepoFromFile(imp.repoUrl)
+	imp.gpr, err = gsc_utils.GetRepoFromFile(imp.gpr.Url)
 	if err != nil {
 		imp.GetLogger().Warning(err.Error())
 	}
@@ -66,7 +66,7 @@ func (imp *GSCPackageImport) SetGitRepoUrl(repo string) *GSCPackageImport {
 		repo = fmt.Sprintf("git@%s.git", repo)
 	}
 
-	imp.repoUrl = repo
+	imp.gpr.Url = repo
 	imp.GetLogger().Debugf("Using %s repo", repo)
 
 	return imp
@@ -106,7 +106,7 @@ func (imp *GSCPackageImport) Import() error {
 		return err
 	}
 
-	if imp.repoUrl == "" {
+	if imp.gpr.Url == "" {
 		return fmt.Errorf("Repo to import from was not found or specified")
 	}
 
@@ -115,7 +115,7 @@ func (imp *GSCPackageImport) Import() error {
 	// Clone to a temporary directory
 	tempCloneDir := fmt.Sprintf("%s-%s", imp.nfo.PackageName, gsc_utils.RandomString())
 	imp.GetLogger().Debugf("Cloning into %s directory", tempCloneDir)
-	imp.git.Call("clone", imp.repoUrl, tempCloneDir)
+	imp.git.Call("clone", imp.gpr.Url, tempCloneDir)
 
 	// Remove everything in the current directory, except .osc and temporary clone
 	workingDir, err := os.Getwd()

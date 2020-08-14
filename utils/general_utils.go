@@ -26,26 +26,33 @@ func RandomString() string {
 	return strconv.Itoa(int(1e9 + r%1e9))[1:]
 }
 
-func GetRepoFromFile(repoUrl string) (bool, string, error) {
+func GetRepoFromFile(repoUrl string) (*GitPkgRepo, error) {
 	content, err := ioutil.ReadFile(GIT_PKG_REPO)
+	gpr := new(GitPkgRepo)
+
 	if err != nil {
 		if repoUrl == "" {
-			return false, repoUrl, fmt.Errorf("Package link to a Git repository was not found.")
+			return nil, fmt.Errorf("Package link to a Git repository was not found.")
 		}
 
-		content = []byte(fmt.Sprintf("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<git>\n  <url>%s</url>\n</git>\n", repoUrl))
-		ioutil.WriteFile(GIT_PKG_REPO, content, 0644)
-		return true, repoUrl, nil
+		gpr.SetIsNew()
+		gpr.Url = repoUrl
+		gpr.Branch = "master" // No known releases yet
+
+		if err := ioutil.WriteFile(GIT_PKG_REPO, []byte(gpr.ToXML()), 0644); err != nil {
+			return nil, err
+		}
+
+		return gpr, nil
 	}
 
-	var gitPkgRepo GitPkgRepo
-	if err := xml.Unmarshal(content, &gitPkgRepo); err != nil {
-		return false, "", err
+	if err := xml.Unmarshal(content, gpr); err != nil {
+		return nil, err
 	}
 
-	if repoUrl != "" && repoUrl != gitPkgRepo.Url {
-		return false, "", fmt.Errorf("Git repository is already linked to: %s", gitPkgRepo.Url)
+	if repoUrl != "" && repoUrl != gpr.Url {
+		return nil, fmt.Errorf("Git repository is already linked to: %s", gpr.Url)
 	}
 
-	return false, gitPkgRepo.Url, nil
+	return gpr, nil
 }

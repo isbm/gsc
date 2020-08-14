@@ -16,12 +16,13 @@ import (
 
 // GSCClone class
 type GSCClone struct {
-	project  string
-	repoUrl  string
-	pkg      string
-	initGit  bool
+	project string
+	pkg     string
+
+	gpr      *gsc_utils.GitPkgRepo
 	pkgutils *gsc_utils.GSCUtils
 	git      *gsc_utils.GitCaller
+
 	wzlib_logger.WzLogger
 }
 
@@ -30,6 +31,7 @@ func NewGCSClone() *GSCClone {
 	gw := new(GSCClone)
 	gw.pkgutils = gsc_utils.NewGSCUtils()
 	gw.git = gsc_utils.NewGitCaller()
+	gw.gpr = new(gsc_utils.GitPkgRepo)
 
 	return gw
 }
@@ -48,19 +50,25 @@ func (gw *GSCClone) SetPackage(pkg string) *GSCClone {
 
 // SetGitRepo name
 func (gw *GSCClone) SetGitRepoUrl(repoUrl string) *GSCClone {
-	gw.repoUrl = repoUrl
+	gw.gpr.Url = repoUrl
+	return gw
+}
+
+// SetGitBranch of the package release
+func (gw *GSCClone) SetGitBranch(branch string) *GSCClone {
+	gw.gpr.Branch = branch
 	return gw
 }
 
 func (gw *GSCClone) getGitRepoUrl() string {
 	repo := ""
-	if strings.Contains(gw.repoUrl, "@") {
-		if !strings.HasPrefix(gw.repoUrl, "git@") {
+	if strings.Contains(gw.gpr.Url, "@") {
+		if !strings.HasPrefix(gw.gpr.Url, "git@") {
 			gw.GetLogger().Panic("Wrong Git URL")
 		}
-		repo = gw.repoUrl
+		repo = gw.gpr.Url
 	} else {
-		repo = fmt.Sprintf("git@%s.git", gw.repoUrl)
+		repo = fmt.Sprintf("git@%s.git", gw.gpr.Url)
 	}
 	return repo
 }
@@ -74,7 +82,7 @@ func (gw *GSCClone) addDefaultGitIgnore() error {
 
 func (gw *GSCClone) setupGit() error {
 	var err error
-	if gw.initGit {
+	if gw.gpr.IsNew() {
 		gw.GetLogger().Info("The package was not yet linked to the repository.")
 		gw.addDefaultGitIgnore()
 		gw.git.Call("init")
