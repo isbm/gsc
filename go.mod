@@ -10,6 +10,6 @@ require (
 	github.com/sirupsen/logrus v1.6.0
 	github.com/urfave/cli v1.22.4
 	github.com/urfave/cli/v2 v2.2.0
-	golang.org/x/sys v0.0.0-20200810151505-1b9f1253b3ed // indirect
+	golang.org/x/sys v0.0.0-20200812155832-6a926be9bd1d // indirect
 	google.golang.org/appengine v1.6.5
 )
