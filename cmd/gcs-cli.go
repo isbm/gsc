@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 
+	gsc_release "github.com/isbm/gsc/release"
+
 	gsc_import "github.com/isbm/gsc/import"
 
 	wzlib_logger "github.com/infra-whizz/wzlib/logger"
@@ -24,6 +26,15 @@ func setLogger(ctx *cli.Context) {
 	}
 }
 
+// Release package to a branch
+func releasePackage(ctx *cli.Context) error {
+	setLogger(ctx)
+	rel := gsc_release.NewGSCPackageRelease()
+	rel.SetReleaseBranch(ctx.String("branch"))
+
+	return rel.Release()
+}
+
 // Import package (SR was accepted)
 func importPackage(ctx *cli.Context) error {
 	setLogger(ctx)
@@ -38,7 +49,7 @@ func importPackage(ctx *cli.Context) error {
 // Merge package (SR was accepted)
 func merge(ctx *cli.Context) error {
 	setLogger(ctx)
-	return gsc_merge.NewGSCMergeBranch().Merge()
+	return gsc_merge.NewGSCMergeBranch().Merge(ctx.Bool("develop"))
 }
 
 // Submit request
@@ -126,12 +137,34 @@ func main() {
 			Name:    "add",
 			Aliases: []string{"a"},
 			Action:  add,
+			Usage:   "Add modified changes to the current session",
+		},
+		{
+			Name:    "release",
+			Aliases: []string{"rl", "rel"},
+			Action:  releasePackage,
+			Usage:   "Release to a branch",
+			Flags: []cli.Flag{
+				&cli.StringFlag{
+					Name:     "branch",
+					Aliases:  []string{"b"},
+					Usage:    "Name of the release branch",
+					Required: true,
+				},
+			},
 		},
 		{
 			Name:    "merge",
 			Aliases: []string{"mg"},
 			Action:  merge,
 			Usage:   "Merge current working branch and cleanup everything",
+			Flags: []cli.Flag{
+				&cli.BoolFlag{
+					Name:    "develop",
+					Aliases: []string{"dev"},
+					Usage:   "Set merge as development to the default main branch",
+				},
+			},
 		},
 		{
 			Name:    "submitreq",

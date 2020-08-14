@@ -129,10 +129,19 @@ func (gw *GSCClone) setupGit() error {
 	if pkName, err = gw.pkgutils.GetPackageName(); err != nil {
 		return err
 	}
+
+	if gw.gpr.Branch == "" {
+		return fmt.Errorf("Branch is missing")
+	}
+
+	gw.GetLogger().Infof("Switching to the base branch '%s'", gw.gpr.Branch)
+	gw.git.Call("checkout", gw.gpr.Branch)
+	gw.git.Call("pull")
+
 	branch := fmt.Sprintf("tmp-%s-%s", pkName, pkVer)
-	gw.GetLogger().Infof("Creating new Git branch %s", branch)
+	gw.GetLogger().Infof("Creating and switching to a new Git branch: %s", branch)
 	gw.git.Call("checkout", "-b", branch)
-	gw.GetLogger().Infof("New working Git branch created: %s", branch)
+
 	return err
 }
 
