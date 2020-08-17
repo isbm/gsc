@@ -4,15 +4,14 @@ import (
 	"fmt"
 	"os"
 
-	gsc_release "github.com/isbm/gsc/release"
-
-	gsc_import "github.com/isbm/gsc/import"
-
 	wzlib_logger "github.com/infra-whizz/wzlib/logger"
 	gsc_add "github.com/isbm/gsc/add"
 	gsc_clone "github.com/isbm/gsc/clone"
 	gsc_close "github.com/isbm/gsc/close"
+	gsc_import "github.com/isbm/gsc/import"
 	gsc_merge "github.com/isbm/gsc/merge_branch"
+	gsc_info "github.com/isbm/gsc/pkginfo"
+	gsc_release "github.com/isbm/gsc/release"
 	gsc_submit "github.com/isbm/gsc/submit"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
@@ -56,6 +55,25 @@ func merge(ctx *cli.Context) error {
 func submit(ctx *cli.Context) error {
 	setLogger(ctx)
 	return gsc_submit.NewGSCSubmitRequest().Submit()
+}
+
+// Get package information
+func packageInfo(ctx *cli.Context) error {
+	setLogger(ctx)
+	info := gsc_info.NewGSCPackageInfo()
+	if err := info.ObtainInfo(); err != nil {
+		return err
+	}
+
+	fmt.Printf("       Package: %s\n", info.Name)
+	fmt.Printf("       Version: %s\n", info.Version)
+	fmt.Printf("      Revision: %s\n", info.Project.Revision)
+	fmt.Printf("      Revision: %s\n\n", info.Project.ApiUrl)
+	fmt.Printf("Git Repository: %s\n", info.GitRepo.Url)
+	fmt.Printf("    Git Branch: %s\n", info.GitRepo.Branch)
+	fmt.Printf("    Source URL: %s\n", info.Project.SourceUrl)
+
+	return nil
 }
 
 // Close current branch
@@ -177,6 +195,12 @@ func main() {
 			Aliases: []string{"cl"},
 			Action:  closeBranch,
 			Usage:   "Close all work on this package branch (fall-back to the main branch, delete current)",
+		},
+		{
+			Name:    "info",
+			Aliases: []string{"f"},
+			Action:  packageInfo,
+			Usage:   "Display general information about this package",
 		},
 	}
 
