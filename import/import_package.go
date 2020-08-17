@@ -35,7 +35,7 @@ func NewGSCPackageImport() *GSCPackageImport {
 	imp := new(GSCPackageImport)
 	imp.pkgutils = gsc_utils.NewGSCUtils()
 	imp.git = gsc_utils.NewGitCaller()
-	imp.autoloadGitRepoUrl()
+	imp.gpr = new(gsc_utils.GitPkgRepo)
 
 	var err error
 	imp.nfo, err = imp.pkgutils.GetProjectInfo()
@@ -102,6 +102,8 @@ func (imp *GSCPackageImport) checkDir() error {
 
 // Import
 func (imp *GSCPackageImport) Import() error {
+	imp.autoloadGitRepoUrl()
+
 	if err := imp.checkDir(); err != nil {
 		return err
 	}
