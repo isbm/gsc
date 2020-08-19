@@ -10,6 +10,12 @@ Welcome to GSC: Git to OBS sync's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+.. toctree::
+   :caption: Usage
+   :maxdepth: 2
+
+   usage_general
+
 
 
 Indices and tables
