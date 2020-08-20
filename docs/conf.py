@@ -17,7 +17,7 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'GSC: Git to OBS sync'
+project = 'GSC Tool'
 copyright = '2020, Bo Maryniuk'
 author = 'Bo Maryniuk'
 
