@@ -32,3 +32,6 @@ change by issuing command::
 
   git log
 
+Essentially, command ``add`` means "add a change". And it is better
+that the command is called more often and more granular steps are then
+resulting in the Change Log of the package.
