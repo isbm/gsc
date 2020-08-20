@@ -1,2 +1,3 @@
 cmd/gsc
 sphinx-venv/
+docs/_*
