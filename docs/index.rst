@@ -17,7 +17,8 @@ Welcome to GSC: Git to OBS sync's documentation!
    usage_general
    usage_clone
    usage_making_pkg_changes
-
+   usage_submit_request
+   usage_release_package
 
 
 Indices and tables
