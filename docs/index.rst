@@ -15,6 +15,7 @@ Welcome to GSC: Git to OBS sync's documentation!
    :maxdepth: 2
 
    usage_general
+   usage_clone
 
 
 
