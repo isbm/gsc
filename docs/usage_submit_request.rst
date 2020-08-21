@@ -5,7 +5,7 @@ What is Change Request?
 -----------------------
 
 Change request in OBS terminology is a part of `Staging Workflow
-(https://openbuildservice.org/help/manuals/obs-user-guide/cha.obs.best-practices.webuiusage.html#staging_how_to)`_
+<https://openbuildservice.org/help/manuals/obs-user-guide/cha.obs.best-practices.webuiusage.html#staging_how_to>`_
 and is a process of making required changes to a package. Such change
 affects all the resulting release and therefore must yield to a
 certain rules.
