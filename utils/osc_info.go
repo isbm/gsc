@@ -3,11 +3,29 @@ package gsc_utils
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"strings"
 
 	wzlib_logger "github.com/infra-whizz/wzlib/logger"
 	wzlib_subprocess "github.com/infra-whizz/wzlib/subprocess"
 )
+
+// Definition of OSC status
+type GSCProjectStatus struct {
+	Modified  []string
+	New       []string
+	Deleted   []string
+	Untracked []string
+}
+
+func NewGSCProjectStatus() *GSCProjectStatus {
+	stat := new(GSCProjectStatus)
+	stat.Modified = make([]string, 0)
+	stat.New = make([]string, 0)
+	stat.Deleted = make([]string, 0)
+	stat.Untracked = make([]string, 0)
+	return stat
+}
 
 type GSCProjectInfo struct {
 	ProjectName string
@@ -115,4 +133,40 @@ func (utl *GSCUtils) GetProjectInfo() (*GSCProjectInfo, error) {
 		return nil, fmt.Errorf("missing package information")
 	}
 	return nfo, nil
+}
+
+// GetStatus about the OSC current project (list deleted, modified and added files)
+func (utl *GSCUtils) GetStatus() (*GSCProjectStatus, error) {
+	cmd, err := wzlib_subprocess.BufferedExec("osc", "status")
+	if err != nil {
+		return nil, err
+	}
+	out := cmd.StdoutString()
+	cmd.Wait()
+
+	status := NewGSCProjectStatus()
+
+	for _, line := range strings.Split(out, "\n") {
+		statFname := strings.SplitN(strings.TrimSpace(line), " ", 2)
+		if len(statFname) == 2 {
+			stat := strings.ToLower(strings.TrimSpace(statFname[0]))
+			fname := strings.TrimSpace(statFname[1])
+			switch stat {
+			case "!":
+				status.Deleted = append(status.Deleted, fname)
+			case "a":
+				status.New = append(status.New, fname)
+			case "m":
+				status.Modified = append(status.Modified, fname)
+			case "?":
+				status.Untracked = append(status.Untracked, fname)
+			default:
+				utl.GetLogger().Errorf("Unknown OSC status '%s' for file '%s'. Please report a bug.", stat, fname)
+				os.Exit(1)
+			}
+		}
+
+	}
+
+	return status, nil
 }

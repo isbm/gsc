@@ -21,6 +21,7 @@ type GSCAdd struct {
 	pathspec string
 	git      *gsc_utils.GitCaller
 	chlog    *gsc_utils.GSCChangeLog
+	osc      *gsc_utils.GSCUtils
 
 	wzlib_logger.WzLogger
 }
@@ -30,6 +31,7 @@ func NewGSCAdd() *GSCAdd {
 	add := new(GSCAdd).SetPathspec("*")
 	add.git = gsc_utils.NewGitCaller()
 	add.chlog = gsc_utils.NewGSCChangeLog()
+	add.osc = gsc_utils.NewGSCUtils()
 	return add
 }
 
@@ -74,6 +76,22 @@ func (add *GSCAdd) getOSCMessage() (string, error) {
 }
 
 func (add *GSCAdd) Add() error {
+	syncFiles, err := add.osc.GetStatus()
+	if err != nil {
+		return err
+	}
+	// Deleted
+	if len(syncFiles.Deleted) > 0 {
+		cmd := wzlib_subprocess.ExecCommand("osc", append(syncFiles.Deleted[:0], append([]string{"commit"}, syncFiles.Deleted[0:]...)...)...)
+		cmd.Stdin, cmd.Stdout, cmd.Stderr = os.Stdin, os.Stdout, os.Stderr
+		if err := cmd.Run(); err != nil {
+			add.GetLogger().Error(err.Error())
+			return err
+		}
+	}
+
+	// TODO: we have New and Modified in syncFiles. That is still covered by two operations below.
+	//       maybe there should be still different workflow in a future
 	files := add.expandPathspec()
 	cmd := wzlib_subprocess.ExecCommand("osc", append(files[:0], append([]string{"add"}, files[0:]...)...)...)
 	if err := cmd.Run(); err != nil {
@@ -96,6 +114,14 @@ func (add *GSCAdd) Add() error {
 	files = add.expandPathspec()
 	add.git.Call(append(files[:0], append([]string{"add"}, files[0:]...)...)...)
 	add.git.Call("commit", "-m", commitMessage)
+
+	// Add to git removed files
+	syncFiles, err = add.git.GetProjectStatus()
+	if err != nil {
+		return err
+	} else if len(syncFiles.Deleted) > 0 {
+		add.git.Call(append(syncFiles.Deleted[:0], append([]string{"commit", "-m", commitMessage}, syncFiles.Deleted[0:]...)...)...)
+	}
 
 	logEntry, _ := add.chlog.GetWIP()
 	logEntry.Messages = append(logEntry.Messages, "# - "+commitMessage)
