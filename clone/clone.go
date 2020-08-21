@@ -135,7 +135,7 @@ func (gw *GSCClone) setupGit() error {
 	}
 
 	gw.GetLogger().Infof("Switching to the base branch '%s'", gw.gpr.Branch)
-	gw.git.Call("checkout", gw.gpr.Branch)
+	gw.git.Call("checkout", "-f", gw.gpr.Branch)
 	gw.git.Call("pull")
 
 	branch := fmt.Sprintf("tmp-%s-%s", pkName, pkVer)
